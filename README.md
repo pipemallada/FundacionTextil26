@@ -5,9 +5,9 @@ Resuelve el caso **"Gestión de Perfil, Catálogo Gráfico y Contactos para la R
 
 | | |
 |---|---|
-| **Integrantes** | _Nombre Apellido 1_ · _Nombre Apellido 2_ |
-| **Sección / Equipo** | _completar_ |
-| **Docente** | _completar_ |
+| **Integrantes** | _Luis Felipe Mallada_ · _Cristobal Stenger_ · _Cristobal Ramos_ · _Alex Aburto_  |
+| **Sección / Equipo** | _Seccion: 003D · _Equipo 3_ |
+| **Docente** | _Nancy Beatriz Bernal Sanchez_ |
 | **Paquete** | `cl.duoc.redtextil` |
 | **Plataforma** | Android 7.0 (API 24) o superior · `targetSdk 35` |
 
