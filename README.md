@@ -6,7 +6,7 @@ Resuelve el caso **"Gestión de Perfil, Catálogo Gráfico y Contactos para la R
 | | |
 |---|---|
 | **Integrantes** | _Luis Felipe Mallada_ · _Cristobal Stenger_ · _Cristobal Ramos_ · _Alex Aburto_  |
-| **Sección / Equipo** | _Seccion: 003D · _Equipo 3_ |
+| **Sección / Equipo** | Seccion: 003D · Equipo 3|
 | **Docente** | _Nancy Beatriz Bernal Sanchez_ |
 | **Paquete** | `cl.duoc.redtextil` |
 | **Plataforma** | Android 7.0 (API 24) o superior · `targetSdk 35` |
