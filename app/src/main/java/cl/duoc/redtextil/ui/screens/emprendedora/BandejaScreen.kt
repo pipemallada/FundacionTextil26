@@ -21,11 +21,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.MarkEmailUnread
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -39,6 +41,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.redtextil.data.local.entity.ConsultaEntity
 import cl.duoc.redtextil.domain.model.EstadoConsulta
+import cl.duoc.redtextil.ui.components.AccionActualizarServidor
 import cl.duoc.redtextil.ui.components.AvatarIniciales
 import cl.duoc.redtextil.ui.components.CampoTexto
 import cl.duoc.redtextil.ui.components.CargandoPantalla
@@ -72,6 +76,7 @@ fun BandejaScreen(
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    var porEliminar by remember { mutableStateOf<ConsultaEntity?>(null) }
     MensajeSnackbar(estado.mensaje, viewModel::mensajeMostrado)
 
     when {
@@ -88,6 +93,7 @@ fun BandejaScreen(
                     "${estado.pendientes} por responder · ${estado.respondidas} respondidas"
                 )
             }
+            item { AccionActualizarServidor(estado.actualizando, viewModel::actualizarDesdeServidor) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(FiltroConsultas.entries) { filtro ->
@@ -122,6 +128,7 @@ fun BandejaScreen(
                     onBorrador = { viewModel.onBorrador(consulta.id, it) },
                     onGuardar = { viewModel.guardarRespuesta(consulta) },
                     onAlternarEstado = { viewModel.alternarEstado(consulta) },
+                    onEliminar = { porEliminar = consulta },
                     onWhatsapp = {
                         val url = viewModel.urlWhatsapp(consulta)
                         if (url == null || !EnlacesContacto.abrir(context, url)) {
@@ -131,6 +138,22 @@ fun BandejaScreen(
                 )
             }
         }
+    }
+
+    porEliminar?.let { consulta ->
+        AlertDialog(
+            onDismissRequest = { porEliminar = null },
+            icon = { Icon(Icons.Filled.Delete, contentDescription = null) },
+            title = { Text("¿Eliminar esta consulta?") },
+            text = { Text("La consulta de ${consulta.nombreCliente} se borrará del teléfono y del servidor.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.eliminar(consulta)
+                    porEliminar = null
+                }) { Text("Eliminar") }
+            },
+            dismissButton = { TextButton(onClick = { porEliminar = null }) { Text("Cancelar") } }
+        )
     }
 }
 
@@ -143,6 +166,7 @@ private fun TarjetaConsulta(
     onBorrador: (String) -> Unit,
     onGuardar: () -> Unit,
     onAlternarEstado: () -> Unit,
+    onEliminar: () -> Unit,
     onWhatsapp: () -> Unit
 ) {
     var abierta by rememberSaveable(consulta.id) { mutableStateOf(consulta.estado == EstadoConsulta.PENDIENTE) }
@@ -231,6 +255,11 @@ private fun TarjetaConsulta(
                         )
                         Spacer(Modifier.width(6.dp))
                         Text(if (pendiente) "Marcar como respondida" else "Marcar como pendiente")
+                    }
+                    TextButton(onClick = onEliminar) {
+                        Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                        Spacer(Modifier.width(6.dp))
+                        Text("Eliminar consulta", color = MaterialTheme.colorScheme.error)
                     }
                 }
             }

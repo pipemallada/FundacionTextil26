@@ -149,7 +149,7 @@ fun ImagenCatalogo(
 ) {
     if (ruta != null) {
         AsyncImage(
-            model = File(ruta),
+            model = if (ruta.startsWith("http")) ruta else File(ruta),
             contentDescription = descripcion,
             contentScale = ContentScale.Crop,
             placeholder = rememberVectorPainter(Icons.Filled.Image),

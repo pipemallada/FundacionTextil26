@@ -43,6 +43,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.redtextil.data.local.entity.PublicacionEntity
 import cl.duoc.redtextil.domain.model.EstadoSync
+import cl.duoc.redtextil.ui.components.AccionActualizarServidor
 import cl.duoc.redtextil.ui.components.BotonGrande
 import cl.duoc.redtextil.ui.components.CargandoPantalla
 import cl.duoc.redtextil.ui.components.EstadoVacio
@@ -74,7 +75,12 @@ fun CatalogoScreen(
             icono = Icons.Filled.PhotoLibrary,
             titulo = "Tu catálogo está vacío",
             texto = "Sube fotos de tus prendas, arreglos o talleres. Así los clientes ven tu trabajo sin necesidad de Instagram.",
-            accion = { BotonGrande(texto = "Agregar mi primer trabajo", icono = Icons.Filled.AddAPhoto, onClick = onNueva) }
+            accion = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    BotonGrande(texto = "Agregar mi primer trabajo", icono = Icons.Filled.AddAPhoto, onClick = onNueva)
+                    AccionActualizarServidor(estado.actualizando, viewModel::actualizarDesdeServidor)
+                }
+            }
         )
         else -> Box(Modifier.fillMaxSize()) {
             LazyVerticalGrid(
@@ -90,6 +96,9 @@ fun CatalogoScreen(
                         "${estado.publicaciones.size} trabajos de ${estado.nombreComercial}" +
                             if (estado.pendientesEnvio > 0) " · ${estado.pendientesEnvio} por enviar" else ""
                     )
+                }
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    AccionActualizarServidor(estado.actualizando, viewModel::actualizarDesdeServidor)
                 }
                 items(estado.publicaciones, key = { it.id }) { publicacion ->
                     TarjetaPublicacion(

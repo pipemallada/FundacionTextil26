@@ -6,6 +6,10 @@ import cl.duoc.redtextil.data.local.entity.ConsultaEntity
 import cl.duoc.redtextil.data.local.entity.EmprendimientoEntity
 import cl.duoc.redtextil.data.remote.RedTextilApiService
 import cl.duoc.redtextil.data.remote.aDto
+import cl.duoc.redtextil.data.remote.aEntidad
+import cl.duoc.redtextil.data.remote.actualizarOCrear
+import cl.duoc.redtextil.data.remote.conDatosDelServidor
+import cl.duoc.redtextil.data.remote.eliminarEnServidor
 import cl.duoc.redtextil.domain.model.ConsultaForm
 import cl.duoc.redtextil.domain.model.EstadoConsulta
 import cl.duoc.redtextil.domain.model.EstadoSync
@@ -79,23 +83,68 @@ class ConsultaRepository(
         if (red.enLinea.value) runCatching { sincronizarUna(actualizada) }
     }
 
-    suspend fun sincronizarPendientes(): Int {
-        var enviados = 0
-        for (pendiente in dao.pendientesDeSincronizar()) {
-            sincronizarUna(pendiente)
-            enviados++
+    suspend fun eliminar(id: Long) {
+        val consulta = dao.obtenerPorId(id) ?: return
+        if (consulta.remoteId == null) {
+            dao.eliminarDefinitivo(consulta)
+            return
         }
-        return enviados
+        // Ya estaba en el servidor: se marca y se borra alla apenas haya senal
+        val marcada = consulta.copy(
+            eliminada = true,
+            estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
+            fechaActualizacion = System.currentTimeMillis()
+        )
+        dao.actualizar(marcada)
+        if (red.enLinea.value) runCatching { sincronizarUna(marcada) }
     }
 
-    private suspend fun sincronizarUna(consulta: ConsultaEntity) {
-        val fichaRemota = db.emprendimientoDao().obtenerPorId(consulta.emprendimientoId)?.remoteId
-        val idRemoto = consulta.remoteId
-        val respuesta = if (idRemoto == null) {
-            api().crearConsulta(consulta.aDto(fichaRemota))
-        } else {
-            api().actualizarConsulta(idRemoto, consulta.aDto(fichaRemota))
+    suspend fun sincronizarPendientes(): Int = dao.pendientesDeSincronizar().count { sincronizarUna(it) }
+
+    // Recibe las consultas que llegaron al microservicio (por ejemplo, desde otro telefono)
+    suspend fun actualizarDesdeServidor(emprendimientoId: Long): Result<Int> = runCatching {
+        check(red.enLinea.value) { "Sin conexión" }
+        val ficha = db.emprendimientoDao().obtenerPorId(emprendimientoId)
+        val fichaRemota = ficha?.remoteId ?: return@runCatching 0
+        var cambios = 0
+        for (dto in api().listarConsultas(fichaRemota)) {
+            val idRemoto = dto.id ?: continue
+            val local = dao.obtenerPorRemoteId(idRemoto)
+            if (local == null) {
+                val nueva = dto.aEntidad(emprendimientoId)
+                dao.insertar(nueva)
+                if (nueva.estado == EstadoConsulta.PENDIENTE) {
+                    notificaciones.notificarNuevaConsulta(ficha.nombreComercial, nueva.nombreCliente, nueva.servicio)
+                }
+                cambios++
+            } else if (local.estadoSync == EstadoSync.SINCRONIZADO) {
+                val actualizada = local.conDatosDelServidor(dto)
+                if (actualizada != local) {
+                    dao.actualizar(actualizada)
+                    cambios++
+                }
+            }
         }
+        cambios
+    }
+
+    private suspend fun sincronizarUna(consulta: ConsultaEntity): Boolean {
+        val idRemoto = consulta.remoteId
+        if (consulta.eliminada) {
+            if (idRemoto != null) eliminarEnServidor { api().eliminarConsulta(idRemoto) }
+            dao.eliminarDefinitivo(consulta)
+            return true
+        }
+        val ficha = db.emprendimientoDao().obtenerPorId(consulta.emprendimientoId)
+        // La ficha se envia primero: sin su id del servidor, la consulta espera a la proxima sincronizacion
+        if (ficha != null && ficha.remoteId == null && ficha.estadoSync == EstadoSync.PENDIENTE_SINCRONIZAR) return false
+        val dto = consulta.aDto(ficha?.remoteId)
+        val respuesta = actualizarOCrear(
+            idRemoto,
+            actualizar = { api().actualizarConsulta(it, dto) },
+            crear = { api().crearConsulta(dto) }
+        )
         dao.marcarSincronizada(consulta.id, respuesta.id ?: idRemoto, consulta.fechaActualizacion)
+        return true
     }
 }

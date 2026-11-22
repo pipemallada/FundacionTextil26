@@ -30,7 +30,6 @@ data class AppUiState(
     val pendientes: Int = 0,
     val sincronizando: Boolean = false,
     val forzarOffline: Boolean = false,
-    val servidorDemo: Boolean = true,
     val consultasPendientes: Int = 0
 )
 
@@ -59,10 +58,9 @@ class AppViewModel(
         red.enLinea,
         sincronizacion.pendientesTotales,
         sincronizando,
-        preferencias.forzarOffline,
-        preferencias.servidorDemo
-    ) { enLinea, pendientes, sync, forzado, demo ->
-        AppUiState(enLinea, pendientes, sync, forzado, demo)
+        preferencias.forzarOffline
+    ) { enLinea, pendientes, sync, forzado ->
+        AppUiState(enLinea, pendientes, sync, forzado)
     }.combine(consultasPendientes) { estado, porResponder ->
         estado.copy(consultasPendientes = porResponder)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppUiState())
@@ -100,16 +98,6 @@ class AppViewModel(
             _mensajes.emit(
                 if (valor) "Simulando zona sin señal: todo se guardará en el teléfono"
                 else "Señal restablecida: enviando cambios pendientes"
-            )
-        }
-    }
-
-    fun cambiarServidorDemo(valor: Boolean) {
-        preferencias.cambiarServidorDemo(valor)
-        viewModelScope.launch {
-            _mensajes.emit(
-                if (valor) "Usando servidor de demostración"
-                else "Usando API Spring Boot en http://10.0.2.2:8080/api/"
             )
         }
     }

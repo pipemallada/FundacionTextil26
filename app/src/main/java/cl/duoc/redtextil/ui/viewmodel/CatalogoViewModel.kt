@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -23,15 +24,17 @@ data class CatalogoUiState(
     val nombreComercial: String = "",
     val publicaciones: List<PublicacionEntity> = emptyList(),
     val pendientesEnvio: Int = 0,
+    val actualizando: Boolean = false,
     val mensaje: String? = null
 )
 
 class CatalogoViewModel(
-    sesion: SesionRepository,
+    private val sesion: SesionRepository,
     private val catalogo: CatalogoRepository
 ) : ViewModel() {
 
     private val mensaje = MutableStateFlow<String?>(null)
+    private val actualizando = MutableStateFlow(false)
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val datos = sesion.emprendimientoActual.flatMapLatest { actual ->
@@ -49,9 +52,37 @@ class CatalogoViewModel(
         }
     }
 
-    val uiState: StateFlow<CatalogoUiState> = combine(datos, mensaje) { estado, texto ->
-        estado.copy(mensaje = texto)
+    val uiState: StateFlow<CatalogoUiState> = combine(datos, mensaje, actualizando) { estado, texto, recibiendo ->
+        estado.copy(mensaje = texto, actualizando = recibiendo)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogoUiState())
+
+    init {
+        // Cada vez que se abre una cuenta se reciben los cambios del microservicio sin molestar
+        viewModelScope.launch {
+            sesion.sesionId.filterNotNull().collect { actualizar(it, silencioso = true) }
+        }
+    }
+
+    fun actualizarDesdeServidor() {
+        sesion.sesionId.value?.let { actualizar(it, silencioso = false) }
+    }
+
+    private fun actualizar(emprendimientoId: Long, silencioso: Boolean) {
+        if (actualizando.value) return
+        viewModelScope.launch {
+            actualizando.value = true
+            val resultado = catalogo.actualizarDesdeServidor(emprendimientoId)
+            actualizando.value = false
+            val cambios = resultado.getOrDefault(0)
+            if (!silencioso || cambios > 0) {
+                mensaje.value = when {
+                    resultado.isFailure -> "No se pudo conectar con el servidor. Se muestra lo guardado en el teléfono."
+                    cambios > 0 -> "Se recibieron $cambios cambios del servidor"
+                    else -> "Tu catálogo ya está al día con el servidor"
+                }
+            }
+        }
+    }
 
     fun eliminar(publicacion: PublicacionEntity) {
         viewModelScope.launch {

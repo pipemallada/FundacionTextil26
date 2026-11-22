@@ -4,6 +4,9 @@ import cl.duoc.redtextil.data.local.database.AppDatabase
 import cl.duoc.redtextil.data.local.entity.EmprendimientoEntity
 import cl.duoc.redtextil.data.remote.RedTextilApiService
 import cl.duoc.redtextil.data.remote.aDto
+import cl.duoc.redtextil.data.remote.aEntidad
+import cl.duoc.redtextil.data.remote.actualizarOCrear
+import cl.duoc.redtextil.data.remote.conDatosDelServidor
 import cl.duoc.redtextil.domain.model.EstadoFicha
 import cl.duoc.redtextil.domain.model.EstadoSync
 import cl.duoc.redtextil.domain.model.FichaDatos
@@ -161,21 +164,46 @@ class EmprendimientoRepository(
     }
 
     suspend fun sincronizarPendientes(): Int {
-        var enviados = 0
-        for (pendiente in dao.pendientesDeSincronizar()) {
-            sincronizarUna(pendiente)
-            enviados++
+        val pendientes = dao.pendientesDeSincronizar()
+        pendientes.forEach { sincronizarUna(it) }
+        return pendientes.size
+    }
+
+    // Trae las fichas del microservicio: actualiza las que ya estan en el telefono y agrega las nuevas
+    suspend fun actualizarDesdeServidor(): Result<Int> = runCatching {
+        check(red.enLinea.value) { "Sin conexión" }
+        var cambios = 0
+        for (dto in api().listarFichas()) {
+            val idRemoto = dto.id ?: continue
+            val local = dao.obtenerPorRemoteId(idRemoto)
+            when {
+                local == null -> {
+                    // Las fichas historicas se integran desde el dataset, no una por una
+                    if (dto.origen != OrigenFicha.HISTORICO.name) {
+                        dao.insertar(dto.aEntidad())
+                        cambios++
+                    }
+                }
+                // Si la ficha tiene cambios sin enviar, mandan los del telefono
+                local.estadoSync == EstadoSync.SINCRONIZADO -> {
+                    val actualizada = local.conDatosDelServidor(dto)
+                    if (actualizada != local) {
+                        dao.actualizar(actualizada)
+                        cambios++
+                    }
+                }
+            }
         }
-        return enviados
+        cambios
     }
 
     private suspend fun sincronizarUna(emprendimiento: EmprendimientoEntity) {
-        val idRemoto = emprendimiento.remoteId
-        val respuesta = if (idRemoto == null) {
-            api().crearFicha(emprendimiento.aDto())
-        } else {
-            api().actualizarFicha(idRemoto, emprendimiento.aDto())
-        }
-        dao.marcarSincronizado(emprendimiento.id, respuesta.id ?: idRemoto, emprendimiento.fechaActualizacion)
+        val dto = emprendimiento.aDto()
+        val respuesta = actualizarOCrear(
+            emprendimiento.remoteId,
+            actualizar = { api().actualizarFicha(it, dto) },
+            crear = { api().crearFicha(dto) }
+        )
+        dao.marcarSincronizado(emprendimiento.id, respuesta.id ?: emprendimiento.remoteId, emprendimiento.fechaActualizacion)
     }
 }

@@ -5,7 +5,6 @@ import cl.duoc.redtextil.data.local.PreferenciasLocales
 import cl.duoc.redtextil.data.local.database.AppDatabase
 import cl.duoc.redtextil.data.remote.ApiClient
 import cl.duoc.redtextil.data.remote.RedTextilApiService
-import cl.duoc.redtextil.data.remote.ServidorDemoApi
 import cl.duoc.redtextil.data.repository.CatalogoRepository
 import cl.duoc.redtextil.data.repository.ConsultaRepository
 import cl.duoc.redtextil.data.repository.CorreoRepository
@@ -34,10 +33,7 @@ class AppContainer(context: Context) {
     val notificaciones = NotificationHelper(appContext)
     val imageCompressor = ImageCompressor(appContext)
 
-    private val servidorDemo = ServidorDemoApi()
-    private val api: () -> RedTextilApiService = {
-        if (preferencias.servidorDemo.value) servidorDemo else ApiClient.servicio
-    }
+    private val api: () -> RedTextilApiService = { ApiClient.servicio }
 
     val correoRepository = CorreoRepository(database.correoDao(), api, networkMonitor)
     val metricasRepository = MetricasRepository(database.interaccionDao(), api)

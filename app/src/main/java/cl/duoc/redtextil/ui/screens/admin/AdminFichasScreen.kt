@@ -60,6 +60,7 @@ import cl.duoc.redtextil.data.repository.HistoricoRepository
 import cl.duoc.redtextil.domain.model.EstadoFicha
 import cl.duoc.redtextil.domain.model.OrigenFicha
 import cl.duoc.redtextil.ui.components.AvatarIniciales
+import cl.duoc.redtextil.ui.components.AccionActualizarServidor
 import cl.duoc.redtextil.ui.components.BotonGrande
 import cl.duoc.redtextil.ui.components.CampoTexto
 import cl.duoc.redtextil.ui.components.ChipEstado
@@ -93,6 +94,7 @@ fun AdminFichasScreen(
                 "${estado.totalFichas} fichas en total · altas, correcciones y bajas en un toque"
             )
         }
+        item { AccionActualizarServidor(estado.interfaz.actualizando, viewModel::actualizarDesdeServidor) }
         item { TarjetaDataset(estado, viewModel::integrarDatasetHistorico) }
         item {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

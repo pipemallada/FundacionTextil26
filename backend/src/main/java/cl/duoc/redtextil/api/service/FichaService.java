@@ -26,8 +26,12 @@ public class FichaService {
         return fichas.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Ficha", id));
     }
 
+    // Una cuenta por RUT: si la app reintenta el envio (senal mala) se actualiza la misma ficha
     public Ficha crear(Ficha ficha) {
-        ficha.setId(null);
+        Long existente = (ficha.getRut() == null || ficha.getRut().isBlank())
+                ? null
+                : fichas.findFirstByRut(ficha.getRut()).map(Ficha::getId).orElse(null);
+        ficha.setId(existente);
         return fichas.save(conFecha(ficha));
     }
 

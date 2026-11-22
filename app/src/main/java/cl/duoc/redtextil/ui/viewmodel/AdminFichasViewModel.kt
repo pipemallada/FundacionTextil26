@@ -45,6 +45,7 @@ data class EstadoInterfazAdmin(
     val textoObservacion: String = "",
     val errorObservacion: String? = null,
     val procesandoId: Long? = null,
+    val actualizando: Boolean = false,
     val mensaje: String? = null
 )
 
@@ -101,6 +102,30 @@ class AdminFichasViewModel(
             interfaz = ui
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AdminFichasUiState())
+
+    init {
+        actualizar(silencioso = true)
+    }
+
+    fun actualizarDesdeServidor() = actualizar(silencioso = false)
+
+    // Trae las fichas registradas en el microservicio (por ejemplo, desde otros telefonos)
+    private fun actualizar(silencioso: Boolean) {
+        if (interfaz.value.actualizando) return
+        viewModelScope.launch {
+            interfaz.update { it.copy(actualizando = true) }
+            val resultado = emprendimientos.actualizarDesdeServidor()
+            val cambios = resultado.getOrDefault(0)
+            val texto = when {
+                resultado.isFailure -> "No se pudo conectar con el servidor. Se muestran las fichas guardadas."
+                cambios > 0 -> "Se recibieron $cambios fichas nuevas o actualizadas del servidor"
+                else -> "Las fichas ya están al día con el servidor"
+            }
+            interfaz.update {
+                it.copy(actualizando = false, mensaje = if (!silencioso || cambios > 0) texto else it.mensaje)
+            }
+        }
+    }
 
     fun filtrarEstado(estado: EstadoFicha?) = filtros.update { it.copy(estado = estado) }
 

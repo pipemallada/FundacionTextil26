@@ -54,10 +54,15 @@ class SincronizacionRepository(
 
         if (error == null) {
             if (enviados > 0) notificaciones.notificarSincronizacion(enviados)
+            val recibidas = emprendimientos.actualizarDesdeServidor().getOrDefault(0)
+            val partes = buildList {
+                if (enviados > 0) add("$enviados cambios enviados")
+                if (recibidas > 0) add("$recibidas fichas recibidas")
+            }
             ResultadoSincronizacion(
                 enviados,
                 true,
-                if (enviados > 0) "Sincronización completa: $enviados cambios enviados" else "Todo está al día"
+                if (partes.isEmpty()) "Todo está al día" else "Sincronización completa: ${partes.joinToString(" y ")}"
             )
         } else {
             ResultadoSincronizacion(

@@ -1,6 +1,7 @@
 package cl.duoc.redtextil.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -20,20 +21,26 @@ interface ConsultaDao {
     @Update
     suspend fun actualizar(consulta: ConsultaEntity)
 
+    @Delete
+    suspend fun eliminarDefinitivo(consulta: ConsultaEntity)
+
     @Query("SELECT * FROM consultas WHERE id = :id")
     suspend fun obtenerPorId(id: Long): ConsultaEntity?
 
-    @Query("SELECT * FROM consultas WHERE emprendimientoId = :emprendimientoId ORDER BY fechaEnvio DESC")
+    @Query("SELECT * FROM consultas WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun obtenerPorRemoteId(remoteId: Long): ConsultaEntity?
+
+    @Query("SELECT * FROM consultas WHERE emprendimientoId = :emprendimientoId AND eliminada = 0 ORDER BY fechaEnvio DESC")
     fun observarDeEmprendimiento(emprendimientoId: Long): Flow<List<ConsultaEntity>>
 
-    @Query("SELECT COUNT(*) FROM consultas WHERE emprendimientoId = :emprendimientoId AND estado = 'PENDIENTE'")
+    @Query("SELECT COUNT(*) FROM consultas WHERE emprendimientoId = :emprendimientoId AND estado = 'PENDIENTE' AND eliminada = 0")
     fun contarPendientesDe(emprendimientoId: Long): Flow<Int>
 
     @Query(
         """
         SELECT c.*, e.nombreComercial AS nombreComercial
         FROM consultas c INNER JOIN emprendimientos e ON e.id = c.emprendimientoId
-        WHERE c.enviadaDesdeApp = 1
+        WHERE c.enviadaDesdeApp = 1 AND c.eliminada = 0
         ORDER BY c.fechaEnvio DESC
         """
     )

@@ -34,9 +34,13 @@ public class CatalogoService {
         return publicaciones.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Publicación", id));
     }
 
+    // Si la app reintenta el envio del mismo trabajo (senal mala) no se duplica en el catalogo
     public Publicacion crear(Publicacion publicacion) {
-        publicacion.setId(null);
-        publicacion.setUrlFoto(null);
+        Publicacion existente = publicacion.getFichaId() == null
+                ? null
+                : publicaciones.findFirstByFichaIdAndTitulo(publicacion.getFichaId(), publicacion.getTitulo()).orElse(null);
+        publicacion.setId(existente == null ? null : existente.getId());
+        publicacion.setUrlFoto(existente == null ? null : existente.getUrlFoto());
         return publicaciones.save(publicacion);
     }
 

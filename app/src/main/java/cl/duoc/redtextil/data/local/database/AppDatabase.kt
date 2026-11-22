@@ -23,7 +23,7 @@ import cl.duoc.redtextil.data.local.entity.PublicacionEntity
         InteraccionEntity::class,
         CorreoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

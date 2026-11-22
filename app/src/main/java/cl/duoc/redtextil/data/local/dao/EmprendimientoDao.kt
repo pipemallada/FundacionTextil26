@@ -26,6 +26,9 @@ interface EmprendimientoDao {
     @Query("SELECT * FROM emprendimientos WHERE id = :id")
     suspend fun obtenerPorId(id: Long): EmprendimientoEntity?
 
+    @Query("SELECT * FROM emprendimientos WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun obtenerPorRemoteId(remoteId: Long): EmprendimientoEntity?
+
     @Query("SELECT * FROM emprendimientos WHERE origen != 'HISTORICO' ORDER BY origen ASC, nombreComercial COLLATE NOCASE ASC")
     fun observarCuentasLocales(): Flow<List<EmprendimientoEntity>>
 

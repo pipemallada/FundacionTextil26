@@ -30,6 +30,9 @@ interface RedTextilApiService {
     @PUT("fichas/{id}")
     suspend fun actualizarFicha(@Path("id") id: Long, @Body ficha: FichaDto): FichaDto
 
+    @GET("catalogo")
+    suspend fun listarPublicaciones(@Query("fichaId") fichaId: Long): List<PublicacionDto>
+
     @POST("catalogo")
     suspend fun crearPublicacion(@Body publicacion: PublicacionDto): PublicacionDto
 
@@ -43,11 +46,17 @@ interface RedTextilApiService {
     @POST("catalogo/{id}/foto")
     suspend fun subirFoto(@Path("id") id: Long, @Part foto: MultipartBody.Part): RespuestaApi
 
+    @GET("consultas")
+    suspend fun listarConsultas(@Query("fichaId") fichaId: Long): List<ConsultaDto>
+
     @POST("consultas")
     suspend fun crearConsulta(@Body consulta: ConsultaDto): ConsultaDto
 
     @PUT("consultas/{id}")
     suspend fun actualizarConsulta(@Path("id") id: Long, @Body consulta: ConsultaDto): ConsultaDto
+
+    @DELETE("consultas/{id}")
+    suspend fun eliminarConsulta(@Path("id") id: Long): RespuestaApi
 
     @POST("metricas/interacciones")
     suspend fun enviarInteracciones(@Body interacciones: List<InteraccionDto>): RespuestaApi

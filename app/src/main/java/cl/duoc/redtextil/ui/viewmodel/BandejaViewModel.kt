@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -39,6 +40,7 @@ data class BandejaUiState(
     val borradores: Map<Long, String> = emptyMap(),
     val errores: Map<Long, String> = emptyMap(),
     val guardandoId: Long? = null,
+    val actualizando: Boolean = false,
     val mensaje: String? = null
 )
 
@@ -46,11 +48,12 @@ private data class EstadoEdicion(
     val borradores: Map<Long, String> = emptyMap(),
     val errores: Map<Long, String> = emptyMap(),
     val guardandoId: Long? = null,
+    val actualizando: Boolean = false,
     val mensaje: String? = null
 )
 
 class BandejaViewModel(
-    sesion: SesionRepository,
+    private val sesion: SesionRepository,
     private val consultas: ConsultaRepository
 ) : ViewModel() {
 
@@ -84,9 +87,50 @@ class BandejaViewModel(
             borradores = ed.borradores,
             errores = ed.errores,
             guardandoId = ed.guardandoId,
+            actualizando = ed.actualizando,
             mensaje = ed.mensaje
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BandejaUiState())
+
+    init {
+        viewModelScope.launch {
+            sesion.sesionId.filterNotNull().collect { actualizar(it, silencioso = true) }
+        }
+    }
+
+    fun actualizarDesdeServidor() {
+        sesion.sesionId.value?.let { actualizar(it, silencioso = false) }
+    }
+
+    private fun actualizar(emprendimientoId: Long, silencioso: Boolean) {
+        if (edicion.value.actualizando) return
+        viewModelScope.launch {
+            edicion.update { it.copy(actualizando = true) }
+            val resultado = consultas.actualizarDesdeServidor(emprendimientoId)
+            val cambios = resultado.getOrDefault(0)
+            val texto = when {
+                resultado.isFailure -> "No se pudo conectar con el servidor. Se muestran las consultas guardadas."
+                cambios > 0 -> "Se recibieron $cambios cambios del servidor"
+                else -> "Tu bandeja ya está al día con el servidor"
+            }
+            edicion.update {
+                it.copy(actualizando = false, mensaje = if (!silencioso || cambios > 0) texto else it.mensaje)
+            }
+        }
+    }
+
+    fun eliminar(consulta: ConsultaEntity) {
+        viewModelScope.launch {
+            consultas.eliminar(consulta.id)
+            edicion.update {
+                it.copy(
+                    borradores = it.borradores - consulta.id,
+                    errores = it.errores - consulta.id,
+                    mensaje = "Se eliminó la consulta de ${consulta.nombreCliente}"
+                )
+            }
+        }
+    }
 
     fun cambiarFiltro(nuevo: FiltroConsultas) {
         filtro.value = nuevo

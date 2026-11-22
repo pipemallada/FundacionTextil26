@@ -26,6 +26,9 @@ interface PublicacionDao {
     @Query("SELECT * FROM publicaciones WHERE id = :id")
     suspend fun obtenerPorId(id: Long): PublicacionEntity?
 
+    @Query("SELECT * FROM publicaciones WHERE remoteId = :remoteId LIMIT 1")
+    suspend fun obtenerPorRemoteId(remoteId: Long): PublicacionEntity?
+
     @Query("SELECT * FROM publicaciones WHERE emprendimientoId = :emprendimientoId AND eliminada = 0 ORDER BY fechaCreacion DESC")
     fun observarDeEmprendimiento(emprendimientoId: Long): Flow<List<PublicacionEntity>>
 

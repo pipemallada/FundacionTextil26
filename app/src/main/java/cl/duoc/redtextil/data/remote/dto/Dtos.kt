@@ -72,6 +72,7 @@ data class FichaHistoricaDto(
     val telefono: String? = null,
     val region: String? = null,
     val comuna: String? = null,
+    val comunas: Map<String, String>? = null,
     val rubros: String? = null,
     val instagram: String? = null,
     val descripcion: String? = null

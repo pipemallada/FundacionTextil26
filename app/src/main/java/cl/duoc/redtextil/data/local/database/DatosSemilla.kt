@@ -67,9 +67,7 @@ object DatosSemilla {
                             fotoRuta = ruta,
                             kbOriginal = 2400L + j * 310,
                             kbOptimizado = 96L + j * 12,
-                            fotoSincronizada = true,
-                            estadoSync = EstadoSync.SINCRONIZADO,
-                            remoteId = 5000L + publicaciones.size,
+                            estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
                             fechaCreacion = ahora - (i + j + 1) * DIA,
                             fechaActualizacion = ahora - (i + j + 1) * DIA
                         )
@@ -121,8 +119,7 @@ object DatosSemilla {
         aceptaPrivacidad = true,
         estado = EstadoFicha.ACTIVA,
         origen = OrigenFicha.SEMILLA,
-        estadoSync = EstadoSync.SINCRONIZADO,
-        remoteId = 1000L + i,
+        estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
         fechaRegistro = ahora - (60 - i) * DIA,
         fechaActualizacion = ahora - (30 - i) * DIA
     )
@@ -434,7 +431,7 @@ object DatosSemilla {
                 emprendimientoId = renace.id, nombreCliente = "Marta Silva", correoCliente = "marta.silva@example.com",
                 telefonoCliente = fonoDemo(5101), servicio = Rubro.ACCESORIOS.etiqueta,
                 mensaje = "Hola, ¿pueden hacer un bolso con jeans que tengo en casa? Serían 4 jeans de mi familia.",
-                enviadaDesdeApp = false, estadoSync = EstadoSync.SINCRONIZADO, remoteId = 8001,
+                enviadaDesdeApp = false, estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
                 fechaEnvio = ahora - 2 * DIA, fechaActualizacion = ahora - 2 * DIA
             ),
             ConsultaEntity(
@@ -443,21 +440,21 @@ object DatosSemilla {
                 mensaje = "Quiero transformar una chaqueta antigua de mi papá en algo que pueda usar. ¿Cuánto cobran?",
                 estado = EstadoConsulta.RESPONDIDA,
                 respuesta = "Hola Jorge, ¡claro que sí! Podemos convertirla en un chaleco o un bolso. Pasa por el taller y lo vemos.",
-                enviadaDesdeApp = false, estadoSync = EstadoSync.SINCRONIZADO, remoteId = 8002,
+                enviadaDesdeApp = false, estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
                 fechaEnvio = ahora - 5 * DIA, fechaRespuesta = ahora - 4 * DIA, fechaActualizacion = ahora - 4 * DIA
             ),
             ConsultaEntity(
                 emprendimientoId = aguja.id, nombreCliente = "Lucía Fernández", correoCliente = "lucia.fernandez@example.com",
                 telefonoCliente = fonoDemo(5103), servicio = Rubro.REPARACION.etiqueta,
                 mensaje = "Necesito ajustar 3 pantalones para el trabajo antes del lunes. ¿Tienen hora disponible?",
-                enviadaDesdeApp = false, estadoSync = EstadoSync.SINCRONIZADO, remoteId = 8003,
+                enviadaDesdeApp = false, estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
                 fechaEnvio = ahora - DIA, fechaActualizacion = ahora - DIA
             ),
             ConsultaEntity(
                 emprendimientoId = hilando.id, nombreCliente = "Carmen Gutiérrez", correoCliente = "carmen.gutierrez@example.com",
                 telefonoCliente = fonoDemo(5104), servicio = Rubro.TALLERES.etiqueta,
                 mensaje = "¿Quedan cupos para el taller de crochet de marzo? Somos dos vecinas interesadas.",
-                enviadaDesdeApp = false, estadoSync = EstadoSync.SINCRONIZADO, remoteId = 8004,
+                enviadaDesdeApp = false, estadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
                 fechaEnvio = ahora - 3 * DIA, fechaActualizacion = ahora - 3 * DIA
             )
         )

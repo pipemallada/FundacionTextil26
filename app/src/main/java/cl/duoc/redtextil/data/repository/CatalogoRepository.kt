@@ -4,6 +4,10 @@ import cl.duoc.redtextil.data.local.database.AppDatabase
 import cl.duoc.redtextil.data.local.entity.PublicacionEntity
 import cl.duoc.redtextil.data.remote.RedTextilApiService
 import cl.duoc.redtextil.data.remote.aDto
+import cl.duoc.redtextil.data.remote.aEntidad
+import cl.duoc.redtextil.data.remote.actualizarOCrear
+import cl.duoc.redtextil.data.remote.conDatosDelServidor
+import cl.duoc.redtextil.data.remote.eliminarEnServidor
 import cl.duoc.redtextil.domain.model.EstadoSync
 import cl.duoc.redtextil.domain.model.PublicacionForm
 import cl.duoc.redtextil.domain.validation.CatalogoValidator
@@ -109,29 +113,47 @@ class CatalogoRepository(
         if (red.enLinea.value) runCatching { sincronizarUna(marcada) }
     }
 
-    suspend fun sincronizarPendientes(): Int {
-        var enviados = 0
-        for (pendiente in dao.pendientesDeSincronizar()) {
-            sincronizarUna(pendiente)
-            enviados++
+    suspend fun sincronizarPendientes(): Int = dao.pendientesDeSincronizar().count { sincronizarUna(it) }
+
+    // Trae el catalogo guardado en el microservicio: agrega los trabajos nuevos y actualiza los que cambiaron
+    suspend fun actualizarDesdeServidor(emprendimientoId: Long): Result<Int> = runCatching {
+        check(red.enLinea.value) { "Sin conexión" }
+        val fichaRemota = db.emprendimientoDao().obtenerPorId(emprendimientoId)?.remoteId ?: return@runCatching 0
+        var cambios = 0
+        for (dto in api().listarPublicaciones(fichaRemota)) {
+            val idRemoto = dto.id ?: continue
+            val local = dao.obtenerPorRemoteId(idRemoto)
+            if (local == null) {
+                dao.insertar(dto.aEntidad(emprendimientoId))
+                cambios++
+            } else if (local.estadoSync == EstadoSync.SINCRONIZADO) {
+                val actualizada = local.conDatosDelServidor(dto)
+                if (actualizada != local) {
+                    dao.actualizar(actualizada)
+                    cambios++
+                }
+            }
         }
-        return enviados
+        cambios
     }
 
-    private suspend fun sincronizarUna(publicacion: PublicacionEntity) {
+    private suspend fun sincronizarUna(publicacion: PublicacionEntity): Boolean {
         val idRemoto = publicacion.remoteId
         if (publicacion.eliminada) {
-            if (idRemoto != null) api().eliminarPublicacion(idRemoto)
+            if (idRemoto != null) eliminarEnServidor { api().eliminarPublicacion(idRemoto) }
             compresor.eliminarArchivo(publicacion.fotoRuta)
             dao.eliminarDefinitivo(publicacion)
-            return
+            return true
         }
-        val fichaRemota = db.emprendimientoDao().obtenerPorId(publicacion.emprendimientoId)?.remoteId
-        val respuesta = if (idRemoto == null) {
-            api().crearPublicacion(publicacion.aDto(fichaRemota))
-        } else {
-            api().actualizarPublicacion(idRemoto, publicacion.aDto(fichaRemota))
-        }
+        val ficha = db.emprendimientoDao().obtenerPorId(publicacion.emprendimientoId)
+        // La ficha se envia primero: sin su id del servidor, el trabajo espera a la proxima sincronizacion
+        if (ficha != null && ficha.remoteId == null && ficha.estadoSync == EstadoSync.PENDIENTE_SINCRONIZAR) return false
+        val dto = publicacion.aDto(ficha?.remoteId)
+        val respuesta = actualizarOCrear(
+            idRemoto,
+            actualizar = { api().actualizarPublicacion(it, dto) },
+            crear = { api().crearPublicacion(dto) }
+        )
         val nuevoIdRemoto = respuesta.id ?: idRemoto
         val ruta = publicacion.fotoRuta
         // La foto ya va comprimida (max 1080 px y JPEG al 75%), asi se sube rapido aunque la senal sea mala
@@ -147,5 +169,6 @@ class CatalogoRepository(
             }
         }
         dao.marcarSincronizada(publicacion.id, nuevoIdRemoto, publicacion.fechaActualizacion)
+        return true
     }
 }

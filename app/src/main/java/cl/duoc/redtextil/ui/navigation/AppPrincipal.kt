@@ -68,6 +68,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import cl.duoc.redtextil.data.remote.ApiClient
 import cl.duoc.redtextil.ui.components.AvisoPrivacidad
 import cl.duoc.redtextil.ui.components.BannerConexion
 import cl.duoc.redtextil.ui.components.LocalSnackbar
@@ -151,7 +152,6 @@ fun AppPrincipal(
                     onVolver = { navController.navigateUp() },
                     onCambiarModo = cambiarModo,
                     onForzarOffline = appViewModel::cambiarForzarOffline,
-                    onServidorDemo = appViewModel::cambiarServidorDemo,
                     onSincronizar = { appViewModel.sincronizar() }
                 )
             },
@@ -200,7 +200,6 @@ private fun BarraSuperior(
     onVolver: () -> Unit,
     onCambiarModo: (ModoApp) -> Unit,
     onForzarOffline: (Boolean) -> Unit,
-    onServidorDemo: (Boolean) -> Unit,
     onSincronizar: () -> Unit
 ) {
     var menuModo by remember { mutableStateOf(false) }
@@ -292,16 +291,13 @@ private fun BarraSuperior(
                     DropdownMenuItem(
                         text = {
                             Column {
-                                Text("Servidor de demostración")
-                                Text(
-                                    if (estado.servidorDemo) "Sin backend Spring Boot" else "API en 10.0.2.2:8080",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
+                                Text("Microservicio Spring Boot")
+                                Text(ApiClient.BASE_URL, style = MaterialTheme.typography.bodySmall)
                             }
                         },
                         leadingIcon = { Icon(Icons.Filled.Dns, contentDescription = null) },
-                        trailingIcon = { Switch(checked = estado.servidorDemo, onCheckedChange = null) },
-                        onClick = { onServidorDemo(!estado.servidorDemo) }
+                        enabled = false,
+                        onClick = {}
                     )
                     HorizontalDivider()
                     DropdownMenuItem(

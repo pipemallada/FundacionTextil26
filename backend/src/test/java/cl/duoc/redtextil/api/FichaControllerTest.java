@@ -67,6 +67,18 @@ class FichaControllerTest {
     }
 
     @Test
+    void reenviarLaMismaFichaNoLaDuplica() throws Exception {
+        String ficha = "{\"rut\": \"11.111.111-1\", \"nombreEmprendedora\": \"Rosa\", \"nombreComercial\": \"Hilos\"}";
+        String primera = mvc.perform(post("/fichas").contentType(MediaType.APPLICATION_JSON).content(ficha))
+                .andReturn().getResponse().getContentAsString();
+        String segunda = mvc.perform(post("/fichas").contentType(MediaType.APPLICATION_JSON).content(ficha))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        org.junit.jupiter.api.Assertions.assertEquals(
+                json.readTree(primera).get("id").asLong(), json.readTree(segunda).get("id").asLong());
+    }
+
+    @Test
     void rechazaFichaSinNombreComercial() throws Exception {
         mvc.perform(post("/fichas").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nombreEmprendedora\": \"Ana\", \"nombreComercial\": \" \"}"))

@@ -31,6 +31,7 @@ data class ConsultaEntity(
     val estado: EstadoConsulta = EstadoConsulta.PENDIENTE,
     val respuesta: String = "",
     val enviadaDesdeApp: Boolean = true,
+    val eliminada: Boolean = false,
     val estadoSync: EstadoSync = EstadoSync.PENDIENTE_SINCRONIZAR,
     val remoteId: Long? = null,
     val fechaEnvio: Long = System.currentTimeMillis(),
