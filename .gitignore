@@ -10,7 +10,7 @@
 .cxx
 .kotlin/
 
-# Firma del APK release: nunca subir la llave ni sus claves
-keystore.properties
-*.jks
+# La llave del APK release (keystore/redtextil-release.jks) y keystore.properties se entregan
+# en el repositorio porque la pauta de evaluacion lo exige. Cualquier otra llave queda fuera.
 *.keystore
+/app/release/
