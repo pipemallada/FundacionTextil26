@@ -66,9 +66,10 @@ class AppViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppUiState())
 
     init {
-        // Si la app se cerro sin senal y ahora hay conexion, se envia lo pendiente al abrirla
+        // Al abrir la app se envia lo pendiente; en el primer inicio se espera a que se guarden las cuentas demo
         viewModelScope.launch {
-            if (red.enLinea.value && sincronizacion.pendientesTotales.first() > 0) sincronizar(automatica = true)
+            sincronizacion.pendientesTotales.first { it > 0 }
+            if (red.enLinea.value) sincronizar(automatica = true)
         }
         // Sincronizacion diferida: apenas vuelve la senal se envian solos los cambios guardados offline
         viewModelScope.launch {

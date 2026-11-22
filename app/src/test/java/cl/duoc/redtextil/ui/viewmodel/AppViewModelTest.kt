@@ -78,6 +78,16 @@ class AppViewModelTest {
     }
 
     @Test
+    fun enElPrimerInicioSincronizaApenasSeGuardanLasCuentasDemo() = runTest {
+        crear()
+        coVerify(exactly = 0) { sincronizacion.sincronizarTodo() }
+
+        pendientes.value = 20
+
+        coVerify(exactly = 1) { sincronizacion.sincronizarTodo() }
+    }
+
+    @Test
     fun laSincronizacionAutomaticaSinCambiosNoMuestraMensaje() = runTest {
         val vm = crear()
         val mensajes = mutableListOf<String>()
