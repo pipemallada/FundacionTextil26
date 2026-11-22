@@ -170,13 +170,13 @@ La llave se generó con:
 keytool -genkeypair -v -keystore keystore/redtextil-release.jks -alias redtextil -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-**Capturas del APK firmado y del .jks:** guardar las capturas en `docs/capturas/` con los nombres `apk-firmado.png` y `jks.png`, y quitar el comentario de abajo para que se muestren.
 
-<!--
+
+**Capturas del APK firmado y del .jks** (el APK de la entrega está en `apk/RedTextilCircular-release.apk`):
+
 | APK firmado | Llave .jks |
 |---|---|
-| ![APK firmado](docs/capturas/apk-firmado.png) | ![Llave jks](docs/capturas/jks.png) |
--->
+| ![APK firmado](docs/capturas/app-firmado.png) | ![Llave jks](docs/capturas/jks.png) |
 
 ---
 
