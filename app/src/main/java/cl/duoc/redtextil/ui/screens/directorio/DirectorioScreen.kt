@@ -38,18 +38,22 @@ import cl.duoc.redtextil.domain.model.Rubro
 import cl.duoc.redtextil.ui.components.CampoSelector
 import cl.duoc.redtextil.ui.components.EstadoVacio
 import cl.duoc.redtextil.ui.components.TarjetaEmprendimiento
+import cl.duoc.redtextil.ui.components.TarjetaIndicadores
 import cl.duoc.redtextil.ui.components.TituloPantalla
 import cl.duoc.redtextil.ui.components.icono
 import cl.duoc.redtextil.ui.viewmodel.AppViewModelProvider
 import cl.duoc.redtextil.ui.viewmodel.DirectorioViewModel
+import cl.duoc.redtextil.ui.viewmodel.IndicadoresViewModel
 import cl.duoc.redtextil.util.ChileGeoData
 
 @Composable
 fun DirectorioScreen(
     onAbrirFicha: (Long) -> Unit,
-    viewModel: DirectorioViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: DirectorioViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    indicadoresViewModel: IndicadoresViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    val indicadores by indicadoresViewModel.uiState.collectAsStateWithLifecycle()
     val filtros = estado.filtros
 
     LazyColumn(
@@ -63,6 +67,7 @@ fun DirectorioScreen(
                 "Encuentra emprendedoras que reparan, transforman y reutilizan ropa en todo Chile"
             )
         }
+        item { TarjetaIndicadores(indicadores, indicadoresViewModel::reintentar) }
         item {
             OutlinedTextField(
                 value = filtros.texto,

@@ -4,12 +4,14 @@ import android.content.Context
 import cl.duoc.redtextil.data.local.PreferenciasLocales
 import cl.duoc.redtextil.data.local.database.AppDatabase
 import cl.duoc.redtextil.data.remote.ApiClient
+import cl.duoc.redtextil.data.remote.MindicadorClient
 import cl.duoc.redtextil.data.remote.RedTextilApiService
 import cl.duoc.redtextil.data.repository.CatalogoRepository
 import cl.duoc.redtextil.data.repository.ConsultaRepository
 import cl.duoc.redtextil.data.repository.CorreoRepository
 import cl.duoc.redtextil.data.repository.EmprendimientoRepository
 import cl.duoc.redtextil.data.repository.HistoricoRepository
+import cl.duoc.redtextil.data.repository.IndicadoresRepository
 import cl.duoc.redtextil.data.repository.MetricasRepository
 import cl.duoc.redtextil.data.repository.SesionRepository
 import cl.duoc.redtextil.data.repository.SincronizacionRepository
@@ -42,6 +44,8 @@ class AppContainer(context: Context) {
     val catalogoRepository = CatalogoRepository(database, api, networkMonitor, imageCompressor)
     val consultaRepository = ConsultaRepository(database, api, networkMonitor, notificaciones, metricasRepository)
     val historicoRepository = HistoricoRepository(appContext, database, api, networkMonitor)
+    // API externa: repositorio propio, no pasa por Room ni por el microservicio
+    val indicadoresRepository = IndicadoresRepository { MindicadorClient.servicio }
     val sincronizacionRepository = SincronizacionRepository(
         emprendimientoRepository,
         catalogoRepository,

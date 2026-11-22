@@ -7,6 +7,7 @@
 -keep,allowobfuscation,allowshrinking class retrofit2.Response
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 -keep,allowobfuscation interface cl.duoc.redtextil.data.remote.RedTextilApiService
+-keep,allowobfuscation interface cl.duoc.redtextil.data.remote.MindicadorApi
 
 -dontwarn okhttp3.internal.platform.**
 -dontwarn org.conscrypt.**

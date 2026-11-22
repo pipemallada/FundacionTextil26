@@ -64,6 +64,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.duoc.redtextil.data.local.entity.EmprendimientoEntity
 import cl.duoc.redtextil.data.local.entity.PublicacionEntity
+import cl.duoc.redtextil.data.repository.IndicadoresEconomicos
 import cl.duoc.redtextil.ui.components.BotonGrande
 import cl.duoc.redtextil.ui.components.CargandoPantalla
 import cl.duoc.redtextil.ui.components.ChipsRubros
@@ -75,6 +76,8 @@ import cl.duoc.redtextil.ui.viewmodel.AppViewModelProvider
 import cl.duoc.redtextil.ui.viewmodel.DetalleUiState
 import cl.duoc.redtextil.ui.viewmodel.DetalleViewModel
 import cl.duoc.redtextil.ui.viewmodel.EventoDetalle
+import cl.duoc.redtextil.ui.viewmodel.IndicadoresUiState
+import cl.duoc.redtextil.ui.viewmodel.IndicadoresViewModel
 import cl.duoc.redtextil.util.EnlacesContacto
 import cl.duoc.redtextil.util.TextoUtil
 
@@ -83,9 +86,12 @@ private val VerdeWhatsapp = Color(0xFF1E7E45)
 @Composable
 fun DetalleEmprendimientoScreen(
     onConsultar: (Long) -> Unit,
-    viewModel: DetalleViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: DetalleViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    indicadoresViewModel: IndicadoresViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    val indicadores by indicadoresViewModel.uiState.collectAsStateWithLifecycle()
+    val cambio = (indicadores as? IndicadoresUiState.Listo)?.indicadores
     val context = LocalContext.current
     val snackbar = LocalSnackbar.current
     var fotoAbierta by remember { mutableStateOf<PublicacionEntity?>(null) }
@@ -114,7 +120,8 @@ fun DetalleEmprendimientoScreen(
             onInstagram = viewModel::abrirInstagram,
             onSitio = viewModel::abrirSitio,
             onConsultar = { onConsultar(emprendimiento.id) },
-            onAbrirFoto = { fotoAbierta = it }
+            onAbrirFoto = { fotoAbierta = it },
+            cambio = cambio
         )
     }
 
@@ -137,6 +144,7 @@ fun DetalleEmprendimientoScreen(
                         "${publicacion.categoria.etiqueta} · ${TextoUtil.formatearPesos(publicacion.precioReferencial)}",
                         fontWeight = FontWeight.Bold
                     )
+                    cambio?.enDolares(publicacion.precioReferencial)?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
                     Text("Técnica: ${publicacion.tecnica}", style = MaterialTheme.typography.bodyMedium)
                     Text(publicacion.descripcion, style = MaterialTheme.typography.bodyMedium)
                 }
@@ -154,7 +162,8 @@ private fun ContenidoDetalle(
     onInstagram: () -> Unit,
     onSitio: () -> Unit,
     onConsultar: () -> Unit,
-    onAbrirFoto: (PublicacionEntity) -> Unit
+    onAbrirFoto: (PublicacionEntity) -> Unit,
+    cambio: IndicadoresEconomicos?
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -319,6 +328,17 @@ private fun ContenidoDetalle(
                 Text("Catálogo (${estado.publicaciones.size} trabajos)", style = MaterialTheme.typography.titleMedium)
             }
         }
+        if (cambio != null && estado.publicaciones.isNotEmpty()) {
+            item {
+                Text(
+                    "Precios en US$ con el dólar observado de ${IndicadoresEconomicos.formatearPesos(cambio.dolar)} " +
+                        "(${cambio.fecha}, mindicador.cl)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+            }
+        }
         item {
             if (estado.publicaciones.isEmpty()) {
                 Text(
@@ -357,6 +377,13 @@ private fun ContenidoDetalle(
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold
                                 )
+                                cambio?.enDolares(publicacion.precioReferencial)?.let {
+                                    Text(
+                                        it,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     }

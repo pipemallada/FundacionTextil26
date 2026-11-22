@@ -71,6 +71,9 @@ object AppViewModelProvider {
         initializer {
             CorreosViewModel(contenedor().correoRepository)
         }
+        initializer {
+            IndicadoresViewModel(contenedor().indicadoresRepository)
+        }
     }
 }
 

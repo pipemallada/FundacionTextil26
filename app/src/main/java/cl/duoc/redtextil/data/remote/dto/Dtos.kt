@@ -82,3 +82,19 @@ data class RespuestaApi(
     val ok: Boolean = true,
     val mensaje: String? = null
 )
+
+// ---- API externa mindicador.cl: solo los indicadores que muestra la app ----
+
+data class IndicadoresDto(
+    val fecha: String? = null,
+    val uf: IndicadorDto? = null,
+    val dolar: IndicadorDto? = null,
+    val euro: IndicadorDto? = null
+)
+
+data class IndicadorDto(
+    val codigo: String? = null,
+    val nombre: String? = null,
+    val fecha: String? = null,
+    val valor: Double? = null
+)
