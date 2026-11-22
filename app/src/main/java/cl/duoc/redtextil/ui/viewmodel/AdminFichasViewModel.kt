@@ -8,6 +8,7 @@ import cl.duoc.redtextil.data.repository.HistoricoRepository
 import cl.duoc.redtextil.data.repository.ResultadoImportacion
 import cl.duoc.redtextil.domain.model.EstadoFicha
 import cl.duoc.redtextil.domain.validation.FichaValidator
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -65,7 +66,9 @@ data class AdminFichasUiState(
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class AdminFichasViewModel(
     private val emprendimientos: EmprendimientoRepository,
-    private val historico: HistoricoRepository
+    private val historico: HistoricoRepository,
+    // La revision de consistencia de cientos de fichas se hace fuera del hilo principal
+    private val procesamiento: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val filtros = MutableStateFlow(FiltrosAdmin())
@@ -84,7 +87,7 @@ class AdminFichasViewModel(
             }
             if (f.soloConProblemas) revisadas.filter { it.problemas.isNotEmpty() } else revisadas
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(procesamiento)
 
     val uiState: StateFlow<AdminFichasUiState> = combine(
         filtros,

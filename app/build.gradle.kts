@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.kover)
 }
 
 // Las claves de firma quedan fuera del repositorio, en keystore.properties (ver README)
@@ -77,6 +78,36 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        // Las pruebas unitarias corren en la JVM: las llamadas a Android devuelven valores por defecto
+        unitTests.isReturnDefaultValues = true
+    }
+}
+
+// Cobertura de las pruebas unitarias: ./gradlew koverHtmlReportDebug koverVerifyDebug
+kover {
+    reports {
+        filters {
+            includes {
+                classes(
+                    "cl.duoc.redtextil.ui.viewmodel.*",
+                    "cl.duoc.redtextil.data.repository.*",
+                    "cl.duoc.redtextil.domain.*"
+                )
+            }
+            excludes {
+                // Fabrica de ViewModels que solo conecta dependencias con la Application
+                classes("cl.duoc.redtextil.ui.viewmodel.AppViewModelProvider*")
+            }
+        }
+        verify {
+            // IE 3.2.1: al menos el 80% de las lineas de logica cubiertas por pruebas unitarias
+            rule("Cobertura minima de ViewModel, Repository y dominio") {
+                minBound(80)
+            }
+        }
+    }
 }
 
 dependencies {
@@ -108,5 +139,7 @@ dependencies {
     implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
