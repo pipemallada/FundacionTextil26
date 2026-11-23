@@ -53,6 +53,7 @@ La barra superior tiene un **selector de perfil** para cambiar en vivo entre los
 - Si el servidor ya no tiene un registro, la app lo vuelve a crear. El servidor no duplica fichas, trabajos ni consultas cuando la app reintenta un envío con mala señal.
 - Notificaciones locales (nueva consulta, registro, cambio de estado y sincronización) y animaciones con propósito.
 - 173 pruebas unitarias de ViewModel y Repository (JUnit + MockK), con un 99 % de cobertura de la lógica.
+- Guía de uso con capturas de cada pantalla: [docs/guia-de-uso.md](docs/guia-de-uso.md)
 
 ---
 
