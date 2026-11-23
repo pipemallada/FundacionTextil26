@@ -52,7 +52,7 @@ La barra superior tiene un **selector de perfil** para cambiar en vivo entre los
 - **Offline-first:** todo se guarda primero en Room y se sincroniza con el microservicio apenas hay señal. El botón **Actualizar** de cada pantalla trae los cambios del servidor, y el menú ⋮ → *Simular sin señal* permite probar la zona rural.
 - Si el servidor ya no tiene un registro, la app lo vuelve a crear. El servidor no duplica fichas, trabajos ni consultas cuando la app reintenta un envío con mala señal.
 - Notificaciones locales (nueva consulta, registro, cambio de estado y sincronización) y animaciones con propósito.
-- 172 pruebas unitarias de ViewModel y Repository (JUnit + MockK), con un 99 % de cobertura de la lógica.
+- 173 pruebas unitarias de ViewModel y Repository (JUnit + MockK), con un 99 % de cobertura de la lógica.
 
 ---
 
@@ -112,6 +112,7 @@ cd backend
 - Queda en `http://localhost:8080/api`. Al iniciar por primera vez carga las 982 fichas históricas.
 - La base de datos H2 se guarda en `backend/data/`. Para revisar las tablas, abre `http://localhost:8080/api/h2-console` con la JDBC URL `jdbc:h2:file:./data/redtextil`, el usuario `sa` y sin clave.
 - Pruebas del microservicio: `./mvnw test` (12 pruebas con MockMvc).
+- Documentación del microservicio: [backend/README.md](backend/README.md).
 
 ### 5.2 Ejecutar la app
 
@@ -132,11 +133,12 @@ Guía rápida para probarlo todo:
 ### 5.3 Pruebas unitarias y cobertura
 
 ```bash
-./gradlew testDebugUnitTest                          # 172 pruebas (JUnit + MockK + coroutines-test)
+./gradlew testDebugUnitTest                          # 173 pruebas (JUnit + MockK + coroutines-test)
 ./gradlew koverHtmlReportDebug koverVerifyDebug      # cobertura; falla si baja del 80 %
 ```
 
 El reporte queda en `app/build/reports/kover/htmlDebug/index.html`. Mide los paquetes `ui.viewmodel`, `data.repository` y `domain`, con un **99,2 % de líneas cubiertas**. Las pruebas están en `app/src/test/java/cl/duoc/redtextil/` (`ui/viewmodel` y `data/repository`).
+Plan de pruebas completo (unitarias, del microservicio y manuales): [docs/plan-de-pruebas.md](docs/plan-de-pruebas.md).
 
 ---
 
